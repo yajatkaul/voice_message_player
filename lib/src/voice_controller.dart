@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:nativewrappers/_internal/vm/lib/ffi_allocation_patch.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -33,9 +34,9 @@ class VoiceController extends MyTicker {
   final String audioSrc;
   late Duration maxDuration;
   Duration currentDuration = Duration.zero;
-  final Function() onComplete;
-  final Function() onPlaying;
-  final Function() onPause;
+  final Function()? onComplete;
+  final Function()? onPlaying;
+  final Function()? onPause;
   final Function(Object)? onError;
   final double noiseWidth = 50.5.w();
   late AnimationController animController;
@@ -83,9 +84,9 @@ class VoiceController extends MyTicker {
     required this.audioSrc,
     required this.maxDuration,
     required this.isFile,
-    required this.onComplete,
-    required this.onPause,
-    required this.onPlaying,
+    this.onComplete,
+    this.onPause,
+    this.onPlaying,
     this.noiseCount = 24,
     this.onError,
     this.randoms,
@@ -115,13 +116,13 @@ class VoiceController extends MyTicker {
       if (isFile) {
         final path = await _getFileFromCache();
         await startPlaying(path);
-        onPlaying();
+        onPlaying?.call();
       } else {
         downloadStreamSubscription = _getFileFromCacheWithProgress()
             .listen((FileResponse fileResponse) async {
           if (fileResponse is FileInfo) {
             await startPlaying(fileResponse.file.path);
-            onPlaying();
+            onPlaying?.call();
           } else if (fileResponse is DownloadProgress) {
             _updateUi();
             // print(downloadProgress);
@@ -153,7 +154,7 @@ class VoiceController extends MyTicker {
         playStatus = PlayStatus.init;
         animController.reset();
         _updateUi();
-        onComplete();
+        onComplete?.call();
       }
     });
   }
@@ -200,7 +201,7 @@ class VoiceController extends MyTicker {
     _player.pause();
     playStatus = PlayStatus.pause;
     _updateUi();
-    onPause();
+    onPause?.call();
   }
 
   Future<String> _getFileFromCache() async {
